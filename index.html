@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WastePassport — Property Waste Tracking</title>
+<meta name="description" content="Register, track and certify household waste disposal. Protect yourself from rogue carriers and help fight fly-tipping.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<style>
+  :root {
+    --green-50: #E1F5EE; --green-100: #9FE1CB; --green-400: #1D9E75; --green-600: #0F6E56; --green-800: #085041; --green-900: #04342C;
+    --amber-50: #FAEEDA; --amber-100: #FAC775; --amber-400: #BA7517; --amber-600: #854F0B; --amber-800: #633806;
+    --coral-50: #FAECE7; --coral-100: #F5C4B3; --coral-400: #D85A30; --coral-600: #993C1D; --coral-800: #4A1B0C;
+    --blue-50: #E6F1FB; --blue-400: #378ADD; --blue-600: #185FA5; --blue-800: #0C447C;
+    --red-50: #FCEBEB; --red-400: #E24B4A; --red-600: #A32D2D;
+    --gray-50: #F1EFE8; --gray-100: #D3D1C7; --gray-400: #888780; --gray-800: #2C2C2A;
+    --bg: #f5f5f2; --surface: #ffffff; --surface2: #f0f0ec; --surface3: #e8e8e4;
+    --text: #1a1a18; --text2: #666662; --text3: #aaa9a5;
+    --border: rgba(0,0,0,0.10); --border2: rgba(0,0,0,0.18);
+    --radius: 10px; --radius-lg: 14px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111110; --surface: #1c1c1a; --surface2: #252523; --surface3: #2e2e2b;
+      --text: #f0f0ec; --text2: #a0a09a; --text3: #666660;
+      --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; justify-content: center; }
+  
+  .app-shell { width: 100%; max-width: 430px; min-height: 100vh; background: var(--surface); display: flex; flex-direction: column; position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.12); }
+
+  /* TOP BAR */
+  .topbar { padding: 14px 16px 12px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; gap: 10px; position: sticky; top: 0; background: var(--surface); z-index: 100; }
+  .topbar-back { background: none; border: none; cursor: pointer; color: var(--text2); padding: 6px; display: flex; align-items: center; border-radius: 8px; transition: background 0.1s; }
+  .topbar-back:hover { background: var(--surface2); }
+  .topbar-title { font-size: 15px; font-weight: 600; flex: 1; }
+  .logo-wrap { display: flex; align-items: center; gap: 8px; flex: 1; }
+  .logo-mark { width: 30px; height: 30px; background: var(--green-400); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .logo-mark i { color: #fff; font-size: 17px; }
+  .logo-text { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+  .logo-text span { color: var(--green-400); }
+  .topbar-action { background: none; border: none; cursor: pointer; color: var(--text2); padding: 6px; border-radius: 8px; }
+
+  /* SCREENS */
+  .screen { display: none; flex: 1; overflow-y: auto; padding-bottom: 80px; }
+  .screen.active { display: block; }
+
+  /* BOTTOM NAV */
+  .bottom-nav { display: flex; border-top: 0.5px solid var(--border); position: sticky; bottom: 0; background: var(--surface); z-index: 100; padding-bottom: env(safe-area-inset-bottom, 0); }
+  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 0 8px; cursor: pointer; border: none; background: none; font-size: 10px; color: var(--text3); transition: color 0.15s; font-family: inherit; }
+  .nav-btn.active { color: var(--green-400); }
+  .nav-btn i { font-size: 21px; }
+
+  /* TYPOGRAPHY */
+  .section-head { font-size: 11px; font-weight: 600; color: var(--text2); padding: 0 16px 8px; letter-spacing: 0.06em; text-transform: uppercase; }
+  h2 { font-size: 20px; font-weight: 700; }
+  h3 { font-size: 15px; font-weight: 600; }
+
+  /* CARDS */
+  .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin: 0 16px 12px; }
+  .card-body { padding: 14px 16px; }
+  .card-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+  .card-row:last-child { border: none; }
+  .card-key { color: var(--text2); }
+  .card-val { font-weight: 500; text-align: right; max-width: 60%; }
+
+  /* BUTTONS */
+  .btn { width: 100%; padding: 13px; border-radius: var(--radius); border: none; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.1s, transform 0.1s; }
+  .btn:active { opacity: 0.85; transform: scale(0.99); }
+  .btn-primary { background: var(--green-400); color: #fff; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 0.5px solid var(--border2); }
+  .btn-danger { background: var(--coral-50); color: var(--coral-600); border: 0.5px solid var(--coral-100); }
+  .btn-sm { width: auto; padding: 9px 18px; font-size: 13px; }
+  .btn-outline { background: none; border: 0.5px solid var(--border2); color: var(--text); }
+
+  /* FORM */
+  .form-section { padding: 0 16px; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; display: block; letter-spacing: 0.02em; }
+  .form-input { width: 100%; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 11px 13px; font-size: 14px; font-family: inherit; background: var(--surface); color: var(--text); outline: none; transition: border-color 0.15s; }
+  .form-input:focus { border-color: var(--green-400); }
+  .form-select { width: 100%; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 11px 13px; font-size: 14px; font-family: inherit; background: var(--surface); color: var(--text); appearance: none; outline: none; }
+  .form-textarea { width: 100%; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 11px 13px; font-size: 14px; font-family: inherit; background: var(--surface); color: var(--text); resize: none; outline: none; }
+  .form-textarea:focus { border-color: var(--green-400); }
+  .input-group { display: flex; gap: 8px; }
+  .input-group .form-input { flex: 1; }
+
+  /* CHIPS */
+  .chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { padding: 8px 14px; border-radius: 20px; border: 0.5px solid var(--border2); font-size: 12px; font-weight: 500; cursor: pointer; background: var(--surface); color: var(--text); transition: all 0.12s; user-select: none; }
+  .chip.on { background: var(--green-50); border-color: var(--green-400); color: var(--green-800); }
+
+  /* BADGES */
+  .badge { font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+  .badge-green { background: var(--green-50); color: var(--green-600); }
+  .badge-amber { background: var(--amber-50); color: var(--amber-600); }
+  .badge-blue { background: var(--blue-50); color: var(--blue-600); }
+  .badge-gray { background: var(--surface2); color: var(--text2); }
+  .badge-red { background: var(--red-50); color: var(--red-600); }
+
+  /* BANNERS */
+  .banner { margin: 12px 16px; border-radius: var(--radius); padding: 12px 14px; display: flex; gap: 10px; align-items: flex-start; }
+  .banner i { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .banner p { font-size: 12px; line-height: 1.55; }
+  .banner-green { background: var(--green-50); }
+  .banner-green i, .banner-green p { color: var(--green-800); }
+  .banner-amber { background: var(--amber-50); }
+  .banner-amber i, .banner-amber p { color: var(--amber-800); }
+  .banner-blue { background: var(--blue-50); }
+  .banner-blue i, .banner-blue p { color: var(--blue-800); }
+  .banner-red { background: var(--red-50); }
+  .banner-red i, .banner-red p { color: var(--red-600); }
+
+  /* DIVIDER */
+  .divider { height: 0.5px; background: var(--border); margin: 16px 0; }
+  .section-divider { height: 8px; background: var(--surface2); border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); margin: 8px 0; }
+
+  /* SPACING UTILS */
+  .px16 { padding-left: 16px; padding-right: 16px; }
+  .pt16 { padding-top: 16px; }
+  .pb16 { padding-bottom: 16px; }
+  .mt8 { margin-top: 8px; }
+  .mt12 { margin-top: 12px; }
+  .mt16 { margin-top: 16px; }
+  .mb8 { margin-bottom: 8px; }
+  .mb12 { margin-bottom: 12px; }
+  .mb16 { margin-bottom: 16px; }
+  .gap8 { gap: 8px; }
+  .flex { display: flex; }
+  .flex-col { flex-direction: column; }
+  .items-center { align-items: center; }
+  .justify-between { justify-content: space-between; }
+
+  /* ===== HOME ===== */
+  .home-hero { padding: 20px 16px 16px; }
+  .home-greeting { font-size: 13px; color: var(--text2); margin-bottom: 3px; }
+  .home-address { font-size: 20px; font-weight: 700; line-height: 1.2; }
+  .home-sub { font-size: 13px; color: var(--text2); margin-top: 5px; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px 16px; }
+  .stat-card { background: var(--surface2); border-radius: var(--radius); padding: 14px; }
+  .stat-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; font-weight: 500; }
+  .stat-value { font-size: 24px; font-weight: 700; }
+  .stat-sub { font-size: 11px; color: var(--text2); margin-top: 3px; }
+  .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px 16px; }
+  .action-tile { border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px 14px; cursor: pointer; background: var(--surface); transition: background 0.1s; }
+  .action-tile:hover { background: var(--surface2); }
+  .action-tile:active { background: var(--surface3); }
+  .tile-icon { width: 38px; height: 38px; border-radius: 9px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+  .tile-icon i { font-size: 19px; }
+  .tile-icon-green { background: var(--green-50); color: var(--green-600); }
+  .tile-icon-amber { background: var(--amber-50); color: var(--amber-600); }
+  .tile-icon-blue { background: var(--blue-50); color: var(--blue-600); }
+  .tile-icon-coral { background: var(--coral-50); color: var(--coral-600); }
+  .tile-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .tile-sub { font-size: 11px; color: var(--text2); }
+  .list-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; border-bottom: 0.5px solid var(--border); transition: background 0.1s; }
+  .list-item:hover { background: var(--surface2); }
+  .list-icon { width: 38px; height: 38px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .list-icon i { font-size: 18px; }
+  .list-info { flex: 1; min-width: 0; }
+  .list-title { font-size: 13px; font-weight: 600; }
+  .list-sub { font-size: 11px; color: var(--text2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chevron { color: var(--text3); font-size: 16px; }
+
+  /* ===== PASSPORT ===== */
+  .passport-header { background: var(--green-800); padding: 18px 16px; }
+  .passport-brand { font-size: 10px; color: var(--green-100); letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
+  .passport-id { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: 0.04em; }
+  .passport-prop { font-size: 12px; color: var(--green-100); margin-top: 3px; }
+  .qr-section { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: var(--surface2); border-top: 0.5px solid var(--border); }
+  .qr-canvas { width: 80px; height: 80px; flex-shrink: 0; border-radius: 6px; background: #fff; display: flex; align-items: center; justify-content: center; }
+  .qr-canvas canvas { display: block; border-radius: 4px; }
+  .qr-label b { display: block; font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .qr-label p { font-size: 11px; color: var(--text2); line-height: 1.5; }
+
+  /* STAGE TRACKER */
+  .stage-list { padding: 8px 16px; }
+  .stage-row { display: flex; gap: 12px; }
+  .stage-spine { display: flex; flex-direction: column; align-items: center; }
+  .stage-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .stage-dot-done { background: var(--green-400); }
+  .stage-dot-done i { color: #fff; font-size: 13px; }
+  .stage-dot-active { background: var(--green-50); border: 2px solid var(--green-400); }
+  .stage-dot-active i { color: var(--green-400); font-size: 13px; }
+  .stage-dot-pending { background: var(--surface2); border: 0.5px solid var(--border2); }
+  .stage-dot-pending i { color: var(--text3); font-size: 13px; }
+  .stage-line { width: 2px; flex: 1; min-height: 20px; margin: 3px 0; background: var(--border2); }
+  .stage-line-done { background: var(--green-400); }
+  .stage-body { padding-bottom: 22px; }
+  .stage-name { font-size: 13px; font-weight: 600; }
+  .stage-desc { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .stage-time { font-size: 11px; color: var(--green-400); font-weight: 500; margin-top: 2px; }
+
+  /* ===== REGISTER ===== */
+  .photo-upload-area { border: 1.5px dashed var(--border2); border-radius: var(--radius); padding: 24px; text-align: center; cursor: pointer; background: var(--surface); }
+  .photo-upload-area:hover { background: var(--surface2); }
+  .photo-upload-area i { font-size: 30px; color: var(--text3); display: block; margin-bottom: 6px; }
+  .photo-upload-area .hint { font-size: 12px; color: var(--text2); }
+  .photo-upload-area .hint2 { font-size: 11px; color: var(--text3); margin-top: 3px; }
+  .photo-grid { display: flex; gap: 8px; flex-wrap: wrap; }
+  .photo-thumb { width: 70px; height: 70px; border-radius: 8px; border: 0.5px solid var(--border2); display: flex; align-items: center; justify-content: center; background: var(--surface2); position: relative; cursor: pointer; overflow: hidden; }
+  .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .photo-thumb .remove-btn { position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; background: rgba(0,0,0,0.55); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .photo-thumb .remove-btn i { color: #fff; font-size: 10px; }
+  .photo-add { width: 70px; height: 70px; border-radius: 8px; border: 1.5px dashed var(--border2); display: flex; align-items: center; justify-content: center; cursor: pointer; background: var(--surface); }
+  .photo-add i { color: var(--text3); font-size: 22px; }
+
+  /* POSTCODE RESULT */
+  .council-result { border: 0.5px solid var(--green-400); border-radius: var(--radius); padding: 12px 14px; background: var(--green-50); margin-top: 8px; display: none; }
+  .council-result.visible { display: block; }
+  .council-name { font-size: 14px; font-weight: 600; color: var(--green-800); }
+  .council-detail { font-size: 11px; color: var(--green-600); margin-top: 3px; }
+
+  /* ===== SCAN ===== */
+  .scan-viewfinder { margin: 16px; border-radius: 14px; overflow: hidden; background: var(--surface2); height: 220px; display: flex; align-items: center; justify-content: center; position: relative; }
+  .vf-inner { width: 160px; height: 160px; position: relative; }
+  .vf-corner { position: absolute; width: 24px; height: 24px; }
+  .vf-corner.tl { top: 0; left: 0; border-top: 3px solid var(--green-400); border-left: 3px solid var(--green-400); border-radius: 4px 0 0 0; }
+  .vf-corner.tr { top: 0; right: 0; border-top: 3px solid var(--green-400); border-right: 3px solid var(--green-400); border-radius: 0 4px 0 0; }
+  .vf-corner.bl { bottom: 0; left: 0; border-bottom: 3px solid var(--green-400); border-left: 3px solid var(--green-400); border-radius: 0 0 0 4px; }
+  .vf-corner.br { bottom: 0; right: 0; border-bottom: 3px solid var(--green-400); border-right: 3px solid var(--green-400); border-radius: 0 0 4px 0; }
+  .vf-center { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .vf-center i { font-size: 44px; color: var(--text3); }
+  .vf-center p { font-size: 11px; color: var(--text3); }
+  .scan-role-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+  .role-card { border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 12px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; background: var(--surface); transition: background 0.1s; }
+  .role-card:hover { background: var(--surface2); }
+  .role-icon { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .role-icon i { font-size: 18px; }
+  .role-info { flex: 1; }
+  .role-title { font-size: 13px; font-weight: 600; }
+  .role-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  /* ===== REPORT ===== */
+  .map-area { margin: 12px 16px; border-radius: var(--radius-lg); height: 160px; background: var(--surface2); display: flex; align-items: center; justify-content: center; border: 0.5px solid var(--border); position: relative; overflow: hidden; }
+  .map-inner { text-align: center; }
+  .map-inner i { font-size: 36px; color: var(--green-400); display: block; margin-bottom: 6px; }
+  .map-inner p { font-size: 13px; font-weight: 600; color: var(--green-600); }
+  .map-inner small { font-size: 11px; color: var(--text2); }
+  .gps-pill { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); border-radius: 20px; padding: 4px 10px; display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--green-600); }
+  .severity-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .sev-chip { padding: 10px 0; border-radius: 8px; border: 0.5px solid var(--border2); text-align: center; cursor: pointer; font-size: 12px; font-weight: 600; background: var(--surface); color: var(--text); transition: all 0.12s; }
+  .sev-chip.on-small { background: var(--green-50); border-color: var(--green-400); color: var(--green-800); }
+  .sev-chip.on-medium { background: var(--amber-50); border-color: var(--amber-400); color: var(--amber-800); }
+  .sev-chip.on-large { background: var(--coral-50); border-color: var(--coral-600); color: var(--coral-800); }
+  .routing-result { border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 12px 14px; background: var(--surface2); margin-top: 8px; display: none; }
+  .routing-result.visible { display: block; }
+  .routing-authority { font-size: 14px; font-weight: 600; }
+  .routing-sub { font-size: 11px; color: var(--text2); margin-top: 3px; }
+
+  /* ===== AI MATCH ===== */
+  .match-card { border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin: 0 16px 12px; }
+  .match-head { background: var(--amber-50); padding: 12px 14px; display: flex; align-items: center; gap: 8px; border-bottom: 0.5px solid rgba(186,117,23,0.2); }
+  .match-head i { color: var(--amber-600); font-size: 17px; }
+  .match-head-label { font-size: 13px; font-weight: 600; color: var(--amber-800); flex: 1; }
+  .match-pct { font-size: 22px; font-weight: 700; color: var(--amber-600); }
+  .match-actions { display: flex; gap: 8px; padding: 0 16px 16px; }
+
+  /* ===== PROPERTY RECORD ===== */
+  .prop-summary { margin: 12px 16px; border-radius: var(--radius-lg); border: 0.5px solid var(--border); padding: 16px; display: flex; gap: 14px; }
+  .prop-icon-wrap { width: 46px; height: 46px; border-radius: 10px; background: var(--green-50); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .prop-icon-wrap i { color: var(--green-600); font-size: 22px; }
+  .prop-address-text { font-size: 15px; font-weight: 700; }
+  .prop-meta { font-size: 12px; color: var(--text2); margin-top: 3px; }
+  .score-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .score-track { flex: 1; height: 4px; background: var(--border2); border-radius: 2px; }
+  .score-fill { height: 100%; border-radius: 2px; background: var(--green-400); }
+  .score-pct { font-size: 11px; font-weight: 600; color: var(--green-400); }
+  .tl-year { font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: 0.06em; text-transform: uppercase; padding: 10px 16px 6px; }
+  .tl-item { display: flex; gap: 12px; padding: 0 16px; margin-bottom: 4px; }
+  .tl-spine { display: flex; flex-direction: column; align-items: center; }
+  .tl-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green-400); flex-shrink: 0; margin-top: 3px; }
+  .tl-dot-pending { background: var(--amber-400); }
+  .tl-vl { width: 1.5px; background: var(--border2); flex: 1; min-height: 16px; margin: 2px 0; }
+  .tl-content { flex: 1; padding-bottom: 14px; border-bottom: 0.5px solid var(--border); }
+  .tl-content:last-child { border: none; }
+  .tl-event { font-size: 13px; font-weight: 600; }
+  .tl-status { font-size: 11px; color: var(--green-400); margin-top: 2px; font-weight: 500; }
+  .tl-status-pending { color: var(--amber-400); }
+  .tl-ref { font-size: 10px; color: var(--text3); margin-top: 1px; }
+
+  /* ===== CERTIFICATE ===== */
+  .cert-header { background: linear-gradient(160deg, var(--green-800) 0%, var(--green-600) 100%); padding: 24px 16px; text-align: center; }
+  .cert-icon-wrap { width: 52px; height: 52px; border-radius: 50%; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
+  .cert-icon-wrap i { color: #fff; font-size: 26px; }
+  .cert-heading { font-size: 14px; font-weight: 700; color: var(--green-100); letter-spacing: 0.08em; text-transform: uppercase; }
+  .cert-ref { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 4px; }
+  .cert-seal { padding: 18px 16px; text-align: center; border-top: 0.5px solid var(--border); }
+  .seal-circle { width: 52px; height: 52px; border: 2px solid var(--green-400); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; }
+  .seal-circle i { color: var(--green-400); font-size: 24px; }
+  .seal-text { font-size: 11px; color: var(--text2); line-height: 1.6; }
+
+  /* ===== SUCCESS ===== */
+  .success-body { padding: 40px 24px 24px; text-align: center; }
+  .success-icon-wrap { width: 68px; height: 68px; border-radius: 50%; background: var(--green-50); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+  .success-icon-wrap i { color: var(--green-400); font-size: 32px; }
+  .success-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .success-sub { font-size: 13px; color: var(--text2); line-height: 1.65; }
+
+  /* LOADING SPINNER */
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* STICKER PREVIEW */
+  .sticker { border: 2px solid var(--green-800); border-radius: 10px; padding: 14px; margin: 0 16px; background: #fff; color: #000; text-align: center; }
+  .sticker-title { font-size: 9px; font-weight: 800; letter-spacing: 0.15em; color: var(--green-800); text-transform: uppercase; margin-bottom: 8px; }
+  .sticker-qr { width: 80px; height: 80px; margin: 0 auto 8px; }
+  .sticker-qr canvas { display: block; }
+  .sticker-id { font-size: 13px; font-weight: 700; color: var(--green-800); letter-spacing: 0.05em; margin-bottom: 4px; }
+  .sticker-msg { font-size: 9px; color: #555; line-height: 1.4; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- TOP BAR -->
+  <div class="topbar" id="topbar">
+    <div class="logo-wrap">
+      <div class="logo-mark"><i class="ti ti-shield-check" aria-hidden="true"></i></div>
+      <span class="logo-text">Waste<span>Passport</span></span>
+    </div>
+    <button class="topbar-action" aria-label="Notifications"><i class="ti ti-bell" aria-hidden="true"></i></button>
+  </div>
+
+  <!-- ===== HOME ===== -->
+  <div class="screen active" id="screen-home">
+    <div class="home-hero">
+      <div class="home-greeting">Good morning, Dan</div>
+      <div class="home-address">14 Oak Road, SW12 4BT</div>
+      <div class="home-sub">4 waste events registered · All disposed correctly</div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Compliance score</div>
+        <div class="stat-value" style="color:var(--green-400)">100%</div>
+        <div class="stat-sub">All events verified</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Open passports</div>
+        <div class="stat-value" style="color:var(--amber-400)">1</div>
+        <div class="stat-sub">Awaiting collection</div>
+      </div>
+    </div>
+
+    <div class="section-head">Quick actions</div>
+    <div class="action-grid">
+      <div class="action-tile" onclick="go('register')">
+        <div class="tile-icon tile-icon-green"><i class="ti ti-plus" aria-hidden="true"></i></div>
+        <div class="tile-title">Register waste</div>
+        <div class="tile-sub">Start a new passport</div>
+      </div>
+      <div class="action-tile" onclick="go('scan')">
+        <div class="tile-icon tile-icon-blue"><i class="ti ti-qrcode" aria-hidden="true"></i></div>
+        <div class="tile-title">Scan QR code</div>
+        <div class="tile-sub">Carrier or verify</div>
+      </div>
+      <div class="action-tile" onclick="go('report')">
+        <div class="tile-icon tile-icon-coral"><i class="ti ti-alert-triangle" aria-hidden="true"></i></div>
+        <div class="tile-title">Report fly-tip</div>
+        <div class="tile-sub">Photo + GPS report</div>
+      </div>
+      <div class="action-tile" onclick="go('property')">
+        <div class="tile-icon tile-icon-amber"><i class="ti ti-building" aria-hidden="true"></i></div>
+        <div class="tile-title">Property record</div>
+        <div class="tile-sub">Full waste history</div>
+      </div>
+    </div>
+
+    <div class="section-head">Recent activity</div>
+    <div class="list-item" onclick="go('passport')">
+      <div class="list-icon tile-icon-amber"><i class="ti ti-tools" aria-hidden="true"></i></div>
+      <div class="list-info">
+        <div class="list-title">Bathroom renovation</div>
+        <div class="list-sub">WP-2026-483921 · Registered today</div>
+      </div>
+      <span class="badge badge-amber">Pending</span>
+    </div>
+    <div class="list-item" onclick="go('cert')">
+      <div class="list-icon tile-icon-green"><i class="ti ti-sofa" aria-hidden="true"></i></div>
+      <div class="list-info">
+        <div class="list-title">Furniture clearance</div>
+        <div class="list-sub">WP-2026-391020 · 14 May</div>
+      </div>
+      <span class="badge badge-green">Certified</span>
+    </div>
+    <div class="list-item">
+      <div class="list-icon tile-icon-blue"><i class="ti ti-category" aria-hidden="true"></i></div>
+      <div class="list-info">
+        <div class="list-title">Kitchen replacement</div>
+        <div class="list-sub">WP-2025-209104 · 3 Jan 2025</div>
+      </div>
+      <span class="badge badge-green">Certified</span>
+    </div>
+    <div class="list-item">
+      <div class="list-icon tile-icon-blue"><i class="ti ti-home" aria-hidden="true"></i></div>
+      <div class="list-info">
+        <div class="list-title">End-of-tenancy clearance</div>
+        <div class="list-sub">WP-2024-114032 · 22 Aug 2024</div>
+      </div>
+      <span class="badge badge-green">Certified</span>
+    </div>
+  </div>
+
+  <!-- ===== REGISTER WASTE ===== -->
+  <div class="screen" id="screen-register">
+    <div class="banner banner-green mt16">
+      <i class="ti ti-info-circle" aria-hidden="true"></i>
+      <p>Registering your waste creates a legal chain of custody and protects you if a carrier fly-tips it.</p>
+    </div>
+
+    <div class="form-section">
+      <div class="form-group">
+        <label class="form-label">Property postcode</label>
+        <div class="input-group">
+          <input class="form-input" type="text" id="reg-postcode" placeholder="e.g. SW12 4BT" value="SW12 4BT">
+          <button class="btn btn-primary btn-sm" onclick="lookupPostcode()">Look up</button>
+        </div>
+        <div class="council-result" id="council-result">
+          <div class="council-name" id="council-name">—</div>
+          <div class="council-detail" id="council-detail">—</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Waste type — select all that apply</label>
+        <div class="chip-group">
+          <div class="chip on" onclick="this.classList.toggle('on')">Bathroom suite</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Kitchen units</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Furniture</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Appliances</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Garden waste</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Building materials</div>
+          <div class="chip" onclick="this.classList.toggle('on')">White goods</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Other</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Estimated volume</label>
+        <select class="form-select">
+          <option>Small (1–5 items)</option>
+          <option selected>Medium (6–20 items / part load)</option>
+          <option>Large (skip load)</option>
+          <option>Very large (multi-skip)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Expected collection date</label>
+        <input class="form-input" type="date" id="reg-date">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Photographs <span style="color:var(--text3);font-weight:400;">(used for AI fly-tip matching)</span></label>
+        <div class="photo-grid" id="photo-grid">
+          <div class="photo-add" onclick="document.getElementById('photo-input').click()"><i class="ti ti-plus" aria-hidden="true"></i></div>
+        </div>
+        <input type="file" id="photo-input" accept="image/*" multiple style="display:none" onchange="handlePhotos(event)">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Additional notes</label>
+        <textarea class="form-textarea" rows="3" placeholder="e.g. Cream bathroom suite, cracked basin, no pedestal..."></textarea>
+      </div>
+    </div>
+
+    <div class="px16 pb16">
+      <button class="btn btn-primary" onclick="generatePassport()" id="gen-btn">Generate Waste Passport</button>
+    </div>
+  </div>
+
+  <!-- ===== PASSPORT VIEW ===== -->
+  <div class="screen" id="screen-passport">
+    <div class="card" style="margin-top:16px;">
+      <div class="passport-header">
+        <div class="passport-brand">Property Waste Passport</div>
+        <div class="passport-id" id="passport-id-display">WP-2026-483921</div>
+        <div class="passport-prop" id="passport-prop-display">14 Oak Road, London SW12 4BT</div>
+      </div>
+      <div class="card-body">
+        <div class="card-row"><span class="card-key">Waste type</span><span class="card-val" id="pp-type">Bathroom suite</span></div>
+        <div class="card-row"><span class="card-key">Volume</span><span class="card-val" id="pp-vol">Medium (part load)</span></div>
+        <div class="card-row"><span class="card-key">Registered</span><span class="card-val" id="pp-date">31 May 2026, 09:14</span></div>
+        <div class="card-row"><span class="card-key">Status</span><span class="card-val" style="color:var(--amber-400)">Awaiting collection</span></div>
+        <div class="card-row"><span class="card-key">Local authority</span><span class="card-val" id="pp-council">London Borough of Lambeth</span></div>
+      </div>
+      <div class="qr-section">
+        <div class="qr-canvas" id="qr-canvas-passport"></div>
+        <div class="qr-label">
+          <b>Scan to verify</b>
+          <p>Carriers, disposal sites and community members can scan to check registration status.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head mt12">Chain of custody</div>
+    <div class="stage-list">
+      <div class="stage-row">
+        <div class="stage-spine">
+          <div class="stage-dot stage-dot-done"><i class="ti ti-check" aria-hidden="true"></i></div>
+          <div class="stage-line stage-line-done"></div>
+        </div>
+        <div class="stage-body">
+          <div class="stage-name">Waste registered</div>
+          <div class="stage-desc">Photos and details captured</div>
+          <div class="stage-time" id="pp-reg-time">Today 09:14</div>
+        </div>
+      </div>
+      <div class="stage-row">
+        <div class="stage-spine">
+          <div class="stage-dot stage-dot-active"><i class="ti ti-truck" aria-hidden="true"></i></div>
+          <div class="stage-line"></div>
+        </div>
+        <div class="stage-body">
+          <div class="stage-name">Collection</div>
+          <div class="stage-desc">Awaiting carrier QR scan</div>
+        </div>
+      </div>
+      <div class="stage-row">
+        <div class="stage-spine">
+          <div class="stage-dot stage-dot-pending"><i class="ti ti-building-factory" aria-hidden="true"></i></div>
+          <div class="stage-line"></div>
+        </div>
+        <div class="stage-body">
+          <div class="stage-name">Disposal site</div>
+          <div class="stage-desc">Weight and disposal route</div>
+        </div>
+      </div>
+      <div class="stage-row">
+        <div class="stage-spine">
+          <div class="stage-dot stage-dot-pending"><i class="ti ti-certificate" aria-hidden="true"></i></div>
+        </div>
+        <div class="stage-body">
+          <div class="stage-name">Disposal certificate</div>
+          <div class="stage-desc">Legal proof of compliant disposal</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head mt12">Waste sticker</div>
+    <div class="sticker">
+      <div class="sticker-title">Property Waste Passport</div>
+      <div class="sticker-qr" id="sticker-qr"></div>
+      <div class="sticker-id" id="sticker-id">WP-2026-483921</div>
+      <div class="sticker-msg">This item has been registered for lawful disposal. Scan to verify.</div>
+    </div>
+
+    <div class="px16 pt16 pb16">
+      <button class="btn btn-secondary" onclick="go('home')">Back to home</button>
+    </div>
+  </div>
+
+  <!-- ===== SCAN QR ===== -->
+  <div class="screen" id="screen-scan">
+    <div class="scan-viewfinder">
+      <div class="vf-inner">
+        <div class="vf-corner tl"></div>
+        <div class="vf-corner tr"></div>
+        <div class="vf-corner bl"></div>
+        <div class="vf-corner br"></div>
+        <div class="vf-center">
+          <i class="ti ti-qrcode" aria-hidden="true"></i>
+          <p>Point at a Waste Passport QR</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section mb16">
+      <div class="form-group">
+        <label class="form-label">Or enter Passport ID manually</label>
+        <div class="input-group">
+          <input class="form-input" type="text" id="scan-input" placeholder="WP-2026-XXXXXX">
+          <button class="btn btn-primary btn-sm" onclick="go('scan-result')">Verify</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head">Scanning as</div>
+    <div class="scan-role-list">
+      <div class="role-card" onclick="go('scan-result')">
+        <div class="role-icon tile-icon-green"><i class="ti ti-truck" aria-hidden="true"></i></div>
+        <div class="role-info">
+          <div class="role-title">Waste carrier</div>
+          <div class="role-sub">Confirm collection, start chain of custody</div>
+        </div>
+        <i class="ti ti-chevron-right chevron" aria-hidden="true"></i>
+      </div>
+      <div class="role-card" onclick="go('scan-result')">
+        <div class="role-icon tile-icon-amber"><i class="ti ti-building-factory" aria-hidden="true"></i></div>
+        <div class="role-info">
+          <div class="role-title">Disposal site</div>
+          <div class="role-sub">Record weight and issue certificate</div>
+        </div>
+        <i class="ti ti-chevron-right chevron" aria-hidden="true"></i>
+      </div>
+      <div class="role-card" onclick="go('scan-result')">
+        <div class="role-icon tile-icon-blue"><i class="ti ti-users" aria-hidden="true"></i></div>
+        <div class="role-info">
+          <div class="role-title">Community member</div>
+          <div class="role-sub">Verify registration status only — no personal data shown</div>
+        </div>
+        <i class="ti ti-chevron-right chevron" aria-hidden="true"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SCAN RESULT ===== -->
+  <div class="screen" id="screen-scan-result">
+    <div class="banner banner-green mt16">
+      <i class="ti ti-shield-check" aria-hidden="true"></i>
+      <p>Passport verified. This waste is registered for lawful disposal. No personal data is displayed.</p>
+    </div>
+    <div class="card">
+      <div class="passport-header">
+        <div class="passport-brand">Property Waste Passport</div>
+        <div class="passport-id">WP-2026-483921</div>
+        <div class="passport-prop">London SW12 — registered address verified</div>
+      </div>
+      <div class="card-body">
+        <div class="card-row"><span class="card-key">Waste type</span><span class="card-val">Bathroom suite</span></div>
+        <div class="card-row"><span class="card-key">Volume</span><span class="card-val">Medium (part load)</span></div>
+        <div class="card-row"><span class="card-key">Registration</span><span class="card-val" style="color:var(--green-400)">✓ Verified</span></div>
+        <div class="card-row"><span class="card-key">Collection</span><span class="card-val" style="color:var(--amber-400)">Pending</span></div>
+        <div class="card-row"><span class="card-key">Disposal</span><span class="card-val" style="color:var(--amber-400)">Not yet recorded</span></div>
+      </div>
+    </div>
+    <div class="px16 pt16 pb16" style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn btn-primary" onclick="go('home')">Confirm collection (carrier)</button>
+      <button class="btn btn-secondary" onclick="go('scan')">Back</button>
+    </div>
+  </div>
+
+  <!-- ===== REPORT FLY-TIP ===== -->
+  <div class="screen" id="screen-report">
+    <div class="map-area">
+      <div class="gps-pill"><i class="ti ti-current-location" style="font-size:12px;" aria-hidden="true"></i> GPS captured</div>
+      <div class="map-inner">
+        <i class="ti ti-map-pin" aria-hidden="true"></i>
+        <p id="report-coords">Locating…</p>
+        <small id="report-council-line">—</small>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-group">
+        <label class="form-label">Postcode of fly-tip location</label>
+        <div class="input-group">
+          <input class="form-input" type="text" id="report-postcode" placeholder="e.g. SW12 8HH">
+          <button class="btn btn-primary btn-sm" onclick="lookupReportPostcode()">Find</button>
+        </div>
+        <div class="routing-result" id="routing-result">
+          <div class="routing-authority" id="routing-authority">—</div>
+          <div class="routing-sub" id="routing-sub">Your report will be automatically routed to this authority.</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Location description</label>
+        <input class="form-input" type="text" placeholder="e.g. Beside recycling bins on Church Lane">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Severity</label>
+        <div class="severity-row">
+          <div class="sev-chip on-small" onclick="selectSeverity(this,'small')">Small</div>
+          <div class="sev-chip" onclick="selectSeverity(this,'medium')">Medium</div>
+          <div class="sev-chip" onclick="selectSeverity(this,'large')">Large</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Type of waste</label>
+        <div class="chip-group">
+          <div class="chip on" onclick="this.classList.toggle('on')">Household</div>
+          <div class="chip on" onclick="this.classList.toggle('on')">Furniture</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Construction</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Garden</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Electrical</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Hazardous</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Photograph the fly-tipped waste</label>
+        <div class="photo-upload-area" onclick="document.getElementById('report-photo-input').click()">
+          <i class="ti ti-camera" aria-hidden="true"></i>
+          <div class="hint">Tap to take or upload a photo</div>
+          <div class="hint2">AI will analyse against registered Waste Passports</div>
+        </div>
+        <input type="file" id="report-photo-input" accept="image/*" style="display:none">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Vehicle details (optional)</label>
+        <input class="form-input" type="text" placeholder="e.g. White van, partial plate AB21 XYZ">
+      </div>
+    </div>
+
+    <div class="banner banner-amber" style="margin-bottom:8px;">
+      <i class="ti ti-send" aria-hidden="true"></i>
+      <p>You don't need to know which council owns this land. Enter the postcode and we'll route the report automatically.</p>
+    </div>
+
+    <div class="px16 pb16">
+      <button class="btn btn-primary" onclick="submitReport()">Submit report</button>
+    </div>
+  </div>
+
+  <!-- ===== REPORT SENT + AI MATCH ===== -->
+  <div class="screen" id="screen-report-sent">
+    <div class="success-body" style="padding-bottom:16px;">
+      <div class="success-icon-wrap"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="success-title">Report submitted</div>
+      <div class="success-sub" id="report-sent-sub">Routed to the correct local authority. AI image analysis running.</div>
+    </div>
+
+    <div class="section-head">AI matching result</div>
+    <div class="match-card">
+      <div class="match-head">
+        <i class="ti ti-cpu" aria-hidden="true"></i>
+        <span class="match-head-label">Potential match found</span>
+        <span class="match-pct">92%</span>
+      </div>
+      <div class="card-body">
+        <div class="card-row"><span class="card-key">Matched passport</span><span class="card-val">WP-2026-391020</span></div>
+        <div class="card-row"><span class="card-key">Waste type</span><span class="card-val">Bathroom suite (cream)</span></div>
+        <div class="card-row"><span class="card-key">Registered address</span><span class="card-val">SW12 postcode</span></div>
+        <div class="card-row"><span class="card-key">Carrier</span><span class="card-val">ABC Waste Services Ltd</span></div>
+        <div class="card-row"><span class="card-key">Collection scan</span><span class="card-val" style="color:var(--green-400)">Confirmed 28 May</span></div>
+        <div class="card-row"><span class="card-key">Disposal scan</span><span class="card-val" style="color:var(--red-400)">Not recorded</span></div>
+      </div>
+    </div>
+    <div class="match-actions">
+      <button class="btn btn-danger btn-sm">Flag for investigation</button>
+      <button class="btn btn-secondary btn-sm" onclick="go('home')">Dismiss</button>
+    </div>
+    <div class="banner banner-green" style="margin-top:4px;">
+      <i class="ti ti-shield" aria-hidden="true"></i>
+      <p>This lead has been shared with the local enforcement team. The carrier's licence is flagged for review.</p>
+    </div>
+  </div>
+
+  <!-- ===== PROPERTY RECORD ===== -->
+  <div class="screen" id="screen-property">
+    <div class="prop-summary">
+      <div class="prop-icon-wrap"><i class="ti ti-building-community" aria-hidden="true"></i></div>
+      <div style="flex:1;">
+        <div class="prop-address-text">14 Oak Road</div>
+        <div class="prop-meta">London SW12 4BT · Residential</div>
+        <div class="prop-meta">Owner since 2019 · 4 waste events</div>
+        <div class="score-row">
+          <div class="score-track"><div class="score-fill" style="width:100%"></div></div>
+          <span class="score-pct">100% compliant</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head">Waste history</div>
+
+    <div class="tl-year">2026</div>
+    <div class="tl-item">
+      <div class="tl-spine"><div class="tl-dot tl-dot-pending"></div><div class="tl-vl"></div></div>
+      <div class="tl-content">
+        <div class="tl-event">Bathroom renovation</div>
+        <div class="tl-status tl-status-pending">Awaiting disposal confirmation</div>
+        <div class="tl-ref">WP-2026-483921</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-spine"><div class="tl-dot"></div><div class="tl-vl"></div></div>
+      <div class="tl-content">
+        <div class="tl-event">Furniture clearance</div>
+        <div class="tl-status">Disposed correctly · certificate issued</div>
+        <div class="tl-ref">WP-2026-391020 · 14 May 2026</div>
+      </div>
+    </div>
+
+    <div class="tl-year">2025</div>
+    <div class="tl-item">
+      <div class="tl-spine"><div class="tl-dot"></div><div class="tl-vl"></div></div>
+      <div class="tl-content">
+        <div class="tl-event">Kitchen replacement</div>
+        <div class="tl-status">Disposed correctly · certificate issued</div>
+        <div class="tl-ref">WP-2025-209104 · 3 Jan 2025</div>
+      </div>
+    </div>
+
+    <div class="tl-year">2024</div>
+    <div class="tl-item">
+      <div class="tl-spine"><div class="tl-dot"></div></div>
+      <div class="tl-content" style="border:none;">
+        <div class="tl-event">End-of-tenancy clearance</div>
+        <div class="tl-status">Disposed correctly · certificate issued</div>
+        <div class="tl-ref">WP-2024-114032 · 22 Aug 2024</div>
+      </div>
+    </div>
+
+    <div class="px16 pt16 pb16">
+      <button class="btn btn-outline">Download full property report (PDF)</button>
+    </div>
+  </div>
+
+  <!-- ===== DISPOSAL CERTIFICATE ===== -->
+  <div class="screen" id="screen-cert">
+    <div class="card" style="margin-top:16px;">
+      <div class="cert-header">
+        <div class="cert-icon-wrap"><i class="ti ti-certificate" aria-hidden="true"></i></div>
+        <div class="cert-heading">Disposal certificate</div>
+        <div class="cert-ref">WP-2026-391020 · Issued 14 May 2026</div>
+      </div>
+      <div class="card-body">
+        <div class="card-row"><span class="card-key">Property</span><span class="card-val">14 Oak Road, SW12 4BT</span></div>
+        <div class="card-row"><span class="card-key">Waste type</span><span class="card-val">Furniture (sofa, 2 chairs)</span></div>
+        <div class="card-row"><span class="card-key">Weight</span><span class="card-val">142 kg</span></div>
+        <div class="card-row"><span class="card-key">Carrier</span><span class="card-val">Green Collect Ltd</span></div>
+        <div class="card-row"><span class="card-key">Carrier licence</span><span class="card-val" style="color:var(--green-400)">CBDU401827 ✓</span></div>
+        <div class="card-row"><span class="card-key">Disposal site</span><span class="card-val">Cringle Dock Transfer, SW8</span></div>
+        <div class="card-row"><span class="card-key">Disposal method</span><span class="card-val">Recycling (R3)</span></div>
+        <div class="card-row"><span class="card-key">Date disposed</span><span class="card-val">14 May 2026, 11:42</span></div>
+      </div>
+      <div class="cert-seal">
+        <div class="seal-circle"><i class="ti ti-shield-check" aria-hidden="true"></i></div>
+        <p class="seal-text">This certificate confirms that the above waste was collected and disposed of in accordance with UK waste regulations. WastePassport reference: WP-2026-391020.</p>
+      </div>
+    </div>
+    <div class="px16 pb16" style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+      <button class="btn btn-primary">Download PDF certificate</button>
+      <button class="btn btn-secondary" onclick="go('home')">Back to home</button>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <button class="nav-btn active" id="nav-home" onclick="navGo('home')" aria-label="Home">
+      <i class="ti ti-home" aria-hidden="true"></i>Home
+    </button>
+    <button class="nav-btn" id="nav-register" onclick="navGo('register')" aria-label="Register">
+      <i class="ti ti-plus" aria-hidden="true"></i>Register
+    </button>
+    <button class="nav-btn" id="nav-scan" onclick="navGo('scan')" aria-label="Scan">
+      <i class="ti ti-qrcode" aria-hidden="true"></i>Scan
+    </button>
+    <button class="nav-btn" id="nav-report" onclick="navGo('report')" aria-label="Report">
+      <i class="ti ti-alert-triangle" aria-hidden="true"></i>Report
+    </button>
+    <button class="nav-btn" id="nav-property" onclick="navGo('property')" aria-label="Property">
+      <i class="ti ti-building" aria-hidden="true"></i>Property
+    </button>
+  </div>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────
+let currentScreen = 'home';
+let passportCounter = parseInt(localStorage.getItem('wp_counter') || '483921');
+let currentPassportId = 'WP-2026-483921';
+let currentCouncil = 'London Borough of Lambeth';
+
+// ─── NAVIGATION ──────────────────────────────────────────
+const screenTitles = {
+  home: null,
+  register: 'Register waste',
+  passport: 'Waste Passport',
+  scan: 'Scan QR code',
+  'scan-result': 'Passport verified',
+  report: 'Report fly-tipping',
+  'report-sent': 'Report submitted',
+  property: 'Property record',
+  cert: 'Disposal certificate'
+};
+
+const navScreens = ['home','register','scan','report','property'];
+
+function go(name) {
+  document.getElementById('screen-' + currentScreen).classList.remove('active');
+  currentScreen = name;
+  document.getElementById('screen-' + name).classList.add('active');
+  updateTopbar(name);
+  updateNav(name);
+  window.scrollTo(0, 0);
+  if (name === 'passport') renderPassportQR();
+  if (name === 'report') getLocation();
+}
+
+function navGo(name) { go(name); }
+
+function updateTopbar(name) {
+  const tb = document.getElementById('topbar');
+  const title = screenTitles[name];
+  if (title === null) {
+    tb.innerHTML = `<div class="logo-wrap"><div class="logo-mark"><i class="ti ti-shield-check" aria-hidden="true"></i></div><span class="logo-text">Waste<span>Passport</span></span></div><button class="topbar-action" aria-label="Notifications"><i class="ti ti-bell" aria-hidden="true"></i></button>`;
+  } else {
+    tb.innerHTML = `<button class="topbar-back" onclick="goBack()" aria-label="Back"><i class="ti ti-arrow-left" aria-hidden="true"></i></button><span class="topbar-title">${title}</span>`;
+  }
+}
+
+function goBack() {
+  const map = { register:'home', passport:'home', scan:'home', 'scan-result':'scan', report:'home', 'report-sent':'report', property:'home', cert:'home' };
+  go(map[currentScreen] || 'home');
+}
+
+function updateNav(name) {
+  navScreens.forEach(k => {
+    const el = document.getElementById('nav-' + k);
+    if (el) el.classList.toggle('active', k === name);
+  });
+}
+
+// ─── QR CODE GENERATION ──────────────────────────────────
+function makeQR(containerId, text, size) {
+  const el = document.getElementById(containerId);
+  if (!el || typeof QRCode === 'undefined') return;
+  el.innerHTML = '';
+  new QRCode(el, {
+    text: text,
+    width: size,
+    height: size,
+    colorDark: '#085041',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+}
+
+function renderPassportQR() {
+  const id = currentPassportId;
+  const url = `https://wastepassport.gov.uk/verify/${id}`;
+  setTimeout(() => {
+    makeQR('qr-canvas-passport', url, 80);
+    makeQR('sticker-qr', url, 80);
+  }, 100);
+}
+
+// ─── POSTCODE LOOKUP (postcodes.io) ──────────────────────
+async function lookupPostcode() {
+  const pc = document.getElementById('reg-postcode').value.trim().replace(/\s+/g,'');
+  if (!pc) return;
+  const btn = document.querySelector('#screen-register .btn-primary.btn-sm');
+  btn.innerHTML = '<span class="spinner"></span>Looking up…';
+  btn.disabled = true;
+  try {
+    const res = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc)}`);
+    const data = await res.json();
+    if (data.status === 200) {
+      const r = data.result;
+      const council = r.admin_district || r.parliamentary_constituency || 'Local authority';
+      const region = r.region || r.country || '';
+      currentCouncil = council;
+      document.getElementById('council-name').textContent = council;
+      document.getElementById('council-detail').textContent = `${region} · ${r.country}`;
+      document.getElementById('council-result').classList.add('visible');
+      document.getElementById('pp-council').textContent = council;
+    } else {
+      document.getElementById('council-name').textContent = 'Postcode not found';
+      document.getElementById('council-detail').textContent = 'Please check and try again';
+      document.getElementById('council-result').classList.add('visible');
+    }
+  } catch(e) {
+    document.getElementById('council-name').textContent = 'Lookup unavailable';
+    document.getElementById('council-detail').textContent = 'Check your internet connection';
+    document.getElementById('council-result').classList.add('visible');
+  }
+  btn.innerHTML = 'Look up';
+  btn.disabled = false;
+}
+
+async function lookupReportPostcode() {
+  const pc = document.getElementById('report-postcode').value.trim();
+  if (!pc) return;
+  const btn = document.querySelector('#screen-report .btn-primary.btn-sm');
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+  try {
+    const res = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc.replace(/\s+/g,''))}`);
+    const data = await res.json();
+    if (data.status === 200) {
+      const r = data.result;
+      const council = r.admin_district || 'Local authority';
+      document.getElementById('routing-authority').textContent = council;
+      document.getElementById('routing-sub').textContent = `Your report will be automatically routed to ${council}.`;
+      document.getElementById('routing-result').classList.add('visible');
+      document.getElementById('report-coords').textContent = `${r.latitude.toFixed(4)}° N, ${Math.abs(r.longitude).toFixed(4)}° W`;
+      document.getElementById('report-council-line').textContent = council;
+    }
+  } catch(e) {}
+  btn.innerHTML = 'Find';
+  btn.disabled = false;
+}
+
+// ─── GEOLOCATION ─────────────────────────────────────────
+function getLocation() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(pos => {
+    const lat = pos.coords.latitude.toFixed(4);
+    const lon = Math.abs(pos.coords.longitude).toFixed(4);
+    const lonDir = pos.coords.longitude < 0 ? 'W' : 'E';
+    document.getElementById('report-coords').textContent = `${lat}° N, ${lon}° ${lonDir}`;
+  }, () => {
+    document.getElementById('report-coords').textContent = 'Enable location for auto-routing';
+  });
+}
+
+// ─── PHOTO HANDLING ──────────────────────────────────────
+let photoFiles = [];
+
+function handlePhotos(e) {
+  const files = Array.from(e.target.files);
+  files.forEach(file => {
+    photoFiles.push(file);
+    const reader = new FileReader();
+    reader.onload = ev => addPhotoThumb(ev.target.result, photoFiles.length - 1);
+    reader.readAsDataURL(file);
+  });
+  e.target.value = '';
+}
+
+function addPhotoThumb(src, idx) {
+  const grid = document.getElementById('photo-grid');
+  const addBtn = grid.querySelector('.photo-add');
+  const thumb = document.createElement('div');
+  thumb.className = 'photo-thumb';
+  thumb.innerHTML = `<img src="${src}" alt="Waste photo"><div class="remove-btn" onclick="removePhoto(${idx},this.parentElement)"><i class="ti ti-x" aria-hidden="true"></i></div>`;
+  grid.insertBefore(thumb, addBtn);
+}
+
+function removePhoto(idx, el) {
+  photoFiles.splice(idx, 1);
+  el.remove();
+}
+
+// ─── REGISTER + GENERATE PASSPORT ───────────────────────
+function generatePassport() {
+  const btn = document.getElementById('gen-btn');
+  btn.innerHTML = '<span class="spinner"></span>Generating…';
+  btn.disabled = true;
+
+  setTimeout(() => {
+    passportCounter++;
+    localStorage.setItem('wp_counter', passportCounter);
+    const year = new Date().getFullYear();
+    currentPassportId = `WP-${year}-${passportCounter}`;
+
+    const now = new Date();
+    const timeStr = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) +
+      ', ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+    const selectedTypes = [...document.querySelectorAll('#screen-register .chip.on')].map(c => c.textContent);
+    const typeStr = selectedTypes.length ? selectedTypes.join(', ') : 'General waste';
+    const vol = document.querySelector('#screen-register .form-select').value;
+    const pc = document.getElementById('reg-postcode').value;
+
+    document.getElementById('passport-id-display').textContent = currentPassportId;
+    document.getElementById('passport-prop-display').textContent = pc + ', England';
+    document.getElementById('pp-type').textContent = typeStr;
+    document.getElementById('pp-vol').textContent = vol;
+    document.getElementById('pp-date').textContent = timeStr;
+    document.getElementById('pp-council').textContent = currentCouncil;
+    document.getElementById('pp-reg-time').textContent = 'Today ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('sticker-id').textContent = currentPassportId;
+
+    btn.innerHTML = 'Generate Waste Passport';
+    btn.disabled = false;
+    go('passport');
+  }, 1200);
+}
+
+// ─── SEVERITY CHIPS ──────────────────────────────────────
+function selectSeverity(el, level) {
+  el.closest('.severity-row').querySelectorAll('.sev-chip').forEach(c => {
+    c.className = 'sev-chip';
+  });
+  el.classList.add('on-' + level);
+}
+
+// ─── REPORT SUBMIT ───────────────────────────────────────
+function submitReport() {
+  const btn = document.querySelector('#screen-report .btn-primary:not(.btn-sm)');
+  btn.innerHTML = '<span class="spinner"></span>Submitting…';
+  btn.disabled = true;
+  const authority = document.getElementById('routing-authority').textContent;
+  const ref = 'REF-' + Math.floor(Math.random() * 90000 + 10000);
+  setTimeout(() => {
+    document.getElementById('report-sent-sub').textContent =
+      authority !== '—' ?
+      `Routed to ${authority}. Reference: ${ref}. AI image analysis running.` :
+      `Report submitted and routed to the correct local authority. Reference: ${ref}. AI image analysis running.`;
+    btn.innerHTML = 'Submit report';
+    btn.disabled = false;
+    go('report-sent');
+  }, 1000);
+}
+
+// ─── INIT ────────────────────────────────────────────────
+document.getElementById('reg-date').valueAsDate = new Date();
+</script>
+</body>
+</html>
