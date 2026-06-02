@@ -6,7 +6,7 @@
 <title>WastePassport — Property Waste Tracking</title>
 <meta name="description" content="Register, track and certify household waste disposal. Protect yourself from rogue carriers and help fight fly-tipping.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <style>
   :root {
     --green-50: #E1F5EE; --green-100: #9FE1CB; --green-400: #1D9E75; --green-600: #0F6E56; --green-800: #085041; --green-900: #04342C;
@@ -417,23 +417,19 @@
       <div class="form-group">
         <label class="form-label">Property postcode</label>
         <div class="input-group">
-          <input class="form-input" type="text" id="reg-postcode" placeholder="e.g. SW12 4BT" >
+          <input class="form-input" type="text" id="reg-postcode" placeholder="e.g. SW12 4BT" value="SW12 4BT">
           <button class="btn btn-primary btn-sm" onclick="lookupPostcode()">Look up</button>
         </div>
         <div class="council-result" id="council-result">
           <div class="council-name" id="council-name">—</div>
           <div class="council-detail" id="council-detail">—</div>
         </div>
-        <div id="address-container" style="display:none;margin-top:8px;">
-          <label class="form-label">Select address</label>
-          <select class="form-select" id="address-select"></select>
-        </div>
       </div>
 
       <div class="form-group">
         <label class="form-label">Waste type — select all that apply</label>
         <div class="chip-group">
-          <div class="chip" onclick="this.classList.toggle('on')">Bathroom suite</div>
+          <div class="chip on" onclick="this.classList.toggle('on')">Bathroom suite</div>
           <div class="chip" onclick="this.classList.toggle('on')">Kitchen units</div>
           <div class="chip" onclick="this.classList.toggle('on')">Furniture</div>
           <div class="chip" onclick="this.classList.toggle('on')">Appliances</div>
@@ -940,54 +936,34 @@ function renderPassportQR() {
 }
 
 // ─── POSTCODE LOOKUP (postcodes.io) ──────────────────────
-
 async function lookupPostcode() {
-  const pc = document.getElementById('reg-postcode').value.trim();
+  const pc = document.getElementById('reg-postcode').value.trim().replace(/\s+/g,'');
   if (!pc) return;
-
   const btn = document.querySelector('#screen-register .btn-primary.btn-sm');
   btn.innerHTML = '<span class="spinner"></span>Looking up…';
   btn.disabled = true;
-
   try {
-    const postcodeRes = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc.replace(/\s+/g,''))}`);
-    const postcodeData = await postcodeRes.json();
-
-    if (postcodeData.status === 200) {
-      const r = postcodeData.result;
-      currentCouncil = r.admin_district || 'Local authority';
-
-      document.getElementById('council-name').textContent = currentCouncil;
-      document.getElementById('council-detail').textContent =
-        `${r.region || ''} · ${r.country || ''}`;
+    const res = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc)}`);
+    const data = await res.json();
+    if (data.status === 200) {
+      const r = data.result;
+      const council = r.admin_district || r.parliamentary_constituency || 'Local authority';
+      const region = r.region || r.country || '';
+      currentCouncil = council;
+      document.getElementById('council-name').textContent = council;
+      document.getElementById('council-detail').textContent = `${region} · ${r.country}`;
+      document.getElementById('council-result').classList.add('visible');
+      document.getElementById('pp-council').textContent = council;
+    } else {
+      document.getElementById('council-name').textContent = 'Postcode not found';
+      document.getElementById('council-detail').textContent = 'Please check and try again';
       document.getElementById('council-result').classList.add('visible');
     }
-
-    const addressRes = await fetch(
-      `https://api.getAddress.io/find/${encodeURIComponent(pc)}?api-key=4LZkhW4Q-Uqxm9A0EQE_UA52341`
-    );
-
-    const addressData = await addressRes.json();
-
-    const select = document.getElementById('address-select');
-
-    if (select) {
-      select.innerHTML = '<option value="">Select an address...</option>';
-
-      if (addressData.addresses && addressData.addresses.length) {
-        addressData.addresses.forEach(addr => {
-          const option = document.createElement('option');
-          option.value = addr;
-          option.textContent = addr;
-          select.appendChild(option);
-        });
-      }
-    }
-  } catch (e) {
-    console.error(e);
-    alert('Unable to lookup postcode or addresses.');
+  } catch(e) {
+    document.getElementById('council-name').textContent = 'Lookup unavailable';
+    document.getElementById('council-detail').textContent = 'Check your internet connection';
+    document.getElementById('council-result').classList.add('visible');
   }
-
   btn.innerHTML = 'Look up';
   btn.disabled = false;
 }
